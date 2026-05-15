@@ -1,0 +1,40 @@
+name: Deploy WebDAV
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: |
+          rm -f package-lock.json
+          pnpm install
+      
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          packageManager: pnpm
+          secrets: |
+            USERNAME
+            PASSWORD
+        env:
+          USERNAME: ${{ secrets.WEBDAV_USERNAME }}
+          PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
